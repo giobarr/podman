@@ -1,0 +1,11 @@
+
+podman build -t my-custom-amq .
+
+podman run -d --name amq-laser -p 8161:8161 -p 61616:61616 my-custom-amq
+or (for message persistance)
+podman run -d --name amq-laser `
+  -p 8161:8161 -p 61616:61616 `
+  -v "${PWD}/amq-data:/opt/apache-activemq-5.18.3/data:Z" `
+  my-custom-amq
+
+podman exec amq-laser ls /opt/activemq/lib | grep camel

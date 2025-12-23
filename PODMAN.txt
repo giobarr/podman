@@ -1,0 +1,186 @@
+
+---=== SETTING THE ENVIRONMENT UP ===---
+POWERSHELL
+dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart
+
+
+EXECUTE ON WINDOWS
+(it provides a native podman CLI and embeds a guest Linux system to launch your containers)
+(the gues is podman-machine-default, a fedora linux???)
+Install podman cli 
+Install podman desktop
+
+
+===== PODMAN USAGE =====
+POWERSHELL
+podman info
+podman machine list
+podman machine init
+podman machine start
+podman machine stop
+
+
+SIMPLE PS CMD TO SEE THE TIME
+podman run ubi8-micro date
+
+
+PS, PORT FORWARDING EXAMPLE
+podman run --rm -d -p 8080:80 --name httpd docker.io/library/httpd
+Invoke-WebRequest -UseBasicParsing http://localhost:8080/
+
+
+PS, TO ACCESS THE PODMAN LINUX VIA SSH
+podman machine ssh
+
+
+PS, TO ACCESS THE PODMAN LINUS VIA WSL
+wsl -d podman-machine-default
+
+
+PS, TO LIST CONTAINERS
+podman ps
+
+
+PS, TO STOP A CONTAINER
+podman stop <name_or_id>
+
+
+PS, TO REMOVE A CONTAINER
+podman rm <name_or_id>
+
+
+TERMINAL, UPDATE
+sudo dnf upgrade -y
+
+
+TERMINAL, PODMAN VERSION
+podman --version
+
+
+TERMINAL, SWITCH TO  A NON-PRIVILEGED USER
+su user
+
+
+TERMINAL, TO SEE THE OS VERSION
+cat /etc/os-release
+
+
+PS, RESTART THE CONTEINER IF SOMETHING GOES WRONG
+podman machine stop
+wsl --shutdown
+podman machine start
+
+
+---=== FIRST ACTIVITY, A PAGE ===---
+PS (The second 'podman run' maps the Windows path C:\temp to the container):
+cd C:\temp
+podman build -t my-web-page .
+podman run -d -p 8080:80 --name hello-web my-web-page
+or
+podman run -d -p 8080:80 -v ${PWD}:/usr/share/nginx/html:Z --name hello-web-live my-web-page
+
+ON THE BROWSER:
+localhost:8080
+
+
+CONTENT OF index.html
+<!DOCTYPE html>
+<html>
+<body>
+    <h1>Hello World from a Container!</h1>
+    <p>Served by Nginx on Fedora.</p>
+</body>
+</html>
+
+
+CONTENT OF Dockerfile
+# Start with the Nginx image (based on Alpine Linux, which is tiny)
+FROM nginx:alpine
+
+# Copy your HTML file into the place where Nginx looks for files
+# (This path is standard for Nginx)
+COPY index.html /usr/share/nginx/html/index.html
+
+# We don't need a CMD because the Nginx image 
+# already knows how to start itself!
+---=== FIRST ACTIVITY, END ===---
+
+
+---=== SECOND ACTIVITY, AMQ ===---
+PS (it will create a container with amq that runs)
+podman run -d --name my-activemq `
+  -p 8161:8161 `
+  -p 61616:61616 `
+  apache/activemq-classic:latest
+
+ON THE BROWSER:
+localhost:8161  (admin/admin)
+---=== SECOND ACTIVITY, END ===---
+
+
+---=== 3TH ===---
+Create a container with amq/camel from AlmaL9 and the specific versions of amq/camel that worked in my study about them.
+---=== 3TH, END ===---
+
+
+---=== 4TH ===---
+WSL:
+vim hello.c
+#include <stdio.h>
+
+int main(int argc, char *argv[]) {
+    if (argc != 2) {
+        printf("Usage: %s <name>\n", argv[0]);
+        return 1;
+    }
+
+    printf("Hello, %s!\n", argv[1]);
+    return 0;
+}
+
+
+
+vim Makefile
+# Makefile for hello.c
+
+CC = gcc
+CFLAGS = -Wall -Wextra
+TARGET = hello
+SRC = hello.c
+
+all: $(TARGET)
+
+$(TARGET): $(SRC)
+            $(CC) $(CFLAGS) -o $(TARGET) $(SRC)
+
+clean:
+            rm -f $(TARGET)
+
+
+
+vim Dockerfile
+FROM ubuntu:latest
+COPY hello /hello
+RUN chmod +x /hello
+CMD ["/hello"]
+
+
+
+gcc hello.c -o hello
+or
+make hello
+
+
+
+WSL:
+cp hello hello.c Dockerfile /mnt/c/Users/giova/hello-container/
+
+
+
+CMD:
+podman build -t hello-c .
+podman run --rm hello-c ./hello ms_Ada
+---=== 4th, END ===---
+
+
+

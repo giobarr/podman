@@ -1,0 +1,50 @@
+<!-- camel.xml, example 3 -->
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="
+         http://www.springframework.org/schema/beans 
+         http://www.springframework.org/schema/beans/spring-beans.xsd
+         http://activemq.apache.org/schema/core 
+         http://activemq.apache.org/schema/core/activemq-core.xsd
+         http://camel.apache.org/schema/spring 
+         http://camel.apache.org/schema/spring/camel-spring.xsd">
+
+    <bean id="jmsConnectionFactory" 
+          class="org.apache.activemq.ActiveMQConnectionFactory">
+        <property name="brokerURL" value="vm://localhost?create=false&amp;waitForStart=5000"/>
+    </bean>
+
+    <bean id="activemq" 
+          class="org.apache.activemq.camel.component.ActiveMQComponent">
+        <property name="connectionFactory" ref="jmsConnectionFactory"/>
+    </bean>
+
+    <camelContext id="camel" xmlns="http://camel.apache.org/schema/spring">
+
+        <!-- Route for FVMQ with XPath evaluation -->
+<route id="CheckFVMandBM">
+    <from uri="activemq:queue:INBOXQ"/>
+    <log message="Received message: ${body}"/>
+    <choice>
+        <!-- First check if FVM exists and is > 4 -->
+        <when>
+            <xpath>count(/Message/FVM) &gt; 0 and number(/Message/FVM) &gt; 4</xpath>
+	    <log message="Routing to FVMQ"/>
+            <to uri="activemq:queue:FVMQ"/>
+        </when>
+        <!-- Then check if BM exists and is > 4 -->
+        <when>
+            <xpath>count(/Message/BM) &gt; 0 and number(/Message/BM) &gt; 4</xpath>
+	    <log message="Routing to BMQ"/>
+            <to uri="activemq:queue:BMQ"/>
+        </when>
+        <!-- Otherwise, send to processed -->
+        <otherwise>
+	    <log message="Routing to DEFECTQ"/>
+            <to uri="activemq:queue:DEFECTQ"/>
+        </otherwise>
+    </choice>
+</route>
+
+    </camelContext>
+</beans>
